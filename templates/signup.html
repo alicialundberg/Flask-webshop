@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Webshop SignUp</title>
+    <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <style>
+  
+  body {
+    padding-bottom: 40px;
+  }
+
+  #navbar{
+  	position:absolute;
+  	left:0px;
+  	right:0px;
+  	top:0px;
+  	height:50px;
+  	display:flex;
+  	align-items:center;
+  	color:#ffffff;
+  	background-color:#a0a0a0;
+  }
+
+  #navHeader{
+  	display:flex;
+  	align-items:center;
+  	height:100%;
+  	font-size:32px;
+  	padding:0px 30px 0px 30px;
+  }
+
+  .navDiv{
+  	display:flex;
+  	align-items:center;
+  	height:100%;
+  	font-size:24px;
+  	padding:0px 30px 0px 30px;
+  	cursor:pointer;
+  }
+
+  .navDiv:hover{
+    background-color:#a00000;
+  }
+
+  .form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+  }
+
+  </style>
+  <body>
+    <div id="navbar">
+  		<div id="navHeader">Needful Things</div>
+  		<div class="navDiv">
+      <div class="navDiv" onclick="window.location.href='/'" >Back to Shop</div>
+      </div>
+    </div>
+
+    <div class = "container">
+      <div class="jumbotron text-center">
+         <h1>Sign Up!</h1>
+         <form class="form-signin" action="/signup" method="post" role="form">
+           <input type="text" name="firstName" id="firstName" class="form-control" placeholder="First Name" required autofocus>
+           <input type="text" name="lastName" id="lastName" class="form-control" placeholder="Last Name" required autofocus>
+           <input type="text" name="ssn" id="ssn" class="form-control" placeholder="Social Security Number" required autofocus>
+           <input type="text" name="adress" id="adress" class="form-control" placeholder="Adress" required autofocus>
+           <input type="text" name="city" id="city" class="form-control" placeholder="City" required autofocus>
+           <input type="text" name="email" id="email" class="form-control" placeholder="Email address" required autofocus>
+           <input type="text" name="phone" id="phone" class="form-control" placeholder="Phone Number" required autofocus>
+           <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+
+           <p><input class="btn btn-lg btn-primary btn-block" type=submit value=Register>
+
+         </form>
+      </div>
+	  </div>
+  </body>
+</html>

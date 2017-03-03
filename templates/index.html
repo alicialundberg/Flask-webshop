@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<head>
+
+  <title>Needful Things</title>
+  <meta charset='utf-8' />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+
+<style>
+
+#wrapper{
+	position:absolute;
+	top:0px;
+	bottom:0px;
+	left:0px;
+	right:0px;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	flex-direction:column;
+	background-color:#000000;
+	color:#ffffff;
+	font-family: sans-serif;
+	font-size:20px;
+	background-image: url("paper.gif");
+}
+
+#text{
+	width:100%;
+	height:40%;
+	text-align:center;
+}
+
+#enterButton{
+	border:1px solid;
+	padding:10px;
+	cursor:pointer;
+}
+
+</style>
+
+<body>
+
+	<div id="wrapper">
+    <div id=text>
+      <h1>QUALITY AND SATISFACTION</h1><br>
+      <i>We are always trying to do our best so that our customers are satisfied and happy with their merchandise.</i>
+    </div>
+    <div id=enterButton onclick="window.location.href='{{ url_for('shop') }}'">ENTER</div>
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Webshop Customer</title>
+    <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <style>
+
+  #wrapper{
+  	position:absolute;
+  	left:0px;
+  	right:0px;
+  	top:55px;
+  	bottom:0px;
+    margin:auto;
+  }
+
+  #navbar{
+  	position:absolute;
+  	left:0px;
+  	right:0px;
+  	top:0px;
+  	height:50px;
+  	display:flex;
+  	align-items:center;
+  	color:#ffffff;
+  	background-color:#a0a0a0;
+  }
+
+  #navHeader{
+  	display:flex;
+  	align-items:center;
+  	height:100%;
+  	font-size:32px;
+  	padding:0px 30px 0px 30px;
+  }
+  
+  .navDiv{
+  	display:flex;
+  	align-items:center;
+  	height:100%;
+  	font-size:24px;
+  	padding:0px 30px 0px 30px;
+  	cursor:pointer;
+  }
+
+  .navDiv:hover{
+    background-color:#a00000;
+  }
+
+  #infoTable {
+    position:relative;
+    display: table;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  #infoTable th, #infoTable td {
+    padding: 5px;
+  }
+
+  #orderHistory {
+    display: table;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  #orderHistory th, #orderHistory td {
+  	width:200px;
+  	border:1px solid grey;
+  	border-collapse:collapse;
+  	padding:0px 5px 0px 5px;
+  }
+
+  #messageDimmer{
+  	position:absolute;
+  	left:0px;
+  	right:0px;
+  	top:0px;
+  	bottom:0px;
+  	background-color:rgba(0, 0, 0, 0.7);
+  	display:none;
+  	justify-content:center;
+  	align-items:center;
+  }
+
+  #messageBox{
+  	border:2px solid;
+  	padding:20px;
+  	background-color:#ffffff;
+  	font-size:20px;
+  	font-weight:bold;
+  }
+
+
+  </style>
+  <body>
+    <div id="navbar">
+  		<div id="navHeader">Needful Things</div>
+      <div id="passwdbutton"  class="navDiv navDivClick" onclick="showPassword()">Change Password</div>
+    	<div id="logoutbutton" class="navDiv navDivClick" onclick="logout()">Logout</div>
+      <div class="navDiv" onclick="window.location.href='/'" >Back to Shop</div>
+    </div>
+
+    <div id="wrapper">
+      <div class="container">
+        <div class="jumbotron text-center">
+          <h1>Welcome!</h1>
+          <p>Here you can change your personal information and view your order history.</p>
+        </div>
+      </div>
+      <div id="infoTable"></div>
+        <h2 style="text-align:center">Order History</h2>
+      <div id="orderHistory"></div>
+      <div id="messageDimmer"><div id="messageBox"></div></div>
+    </div>
+
+  </body>
+  <script>
+
+  function showMessage(text){
+  	messageBox.innerHTML=text;
+  	messageDimmer.style.display='flex';
+  }
+
+  function hideMessage(text){
+  	messageDimmer.style.display='none';
+  }
+
+  // Sends a request to the Python app to log out the current user.
+  function logout(){
+
+  	showMessage("Logging out.");
+
+  	var xhr = new XMLHttpRequest();
+
+  	xhr.open("GET", "/logoff", true);
+
+  	xhr.onreadystatechange = function(){
+
+  		if(this.readyState == 4 && this.status == 200) {
+
+  			if (xhr.responseText=="ok"){
+  				hideMessage();
+          window.location.href = '/';
+  			}
+  		}
+  	}
+  	xhr.send();
+  }
+
+  function updateInfo(i,customer_id) {
+
+    // Create an instance of the XMLHttpRequset class. See http://www.w3schools.com/xml/xml_http.asp for info
+    var xhr = new XMLHttpRequest();
+
+  	// Specify POST request and the server's url
+  	xhr.open("POST", '/updateinfo', true);
+
+  	// Specify what will happen when a response from the server arrives
+  	xhr.onreadystatechange = function(){
+
+  		// If the status code is okay (200) then start print the result, otherwise do nothing (keep waiting)
+  		if(this.readyState == 4 && this.status == 200) {
+
+        if (xhr.responseText=="ok") {
+          getInfo()
+          showMessage("You have successfully updated your personal data!<br><br><button onclick='hideMessage()'>OK</button>")
+        }
+      }
+    }
+    xhr.send(JSON.stringify([infoList[i][0],document.getElementById('a'+i).value,document.getElementById('b'+i).value,document.getElementById('c'+i).value,document.getElementById('d'+i).value,document.getElementById('e'+i).value,document.getElementById('f'+i).value,document.getElementById('g'+i).value]));
+
+  }
+
+  function getInfo() {
+
+    // Create an instance of the XMLHttpRequset class. See http://www.w3schools.com/xml/xml_http.asp for info
+    var xhr = new XMLHttpRequest();
+
+  	// Specify POST request and the server's url
+  	xhr.open("GET", '/getinfo', true);
+
+  	// Specify what will happen when a response from the server arrives
+  	xhr.onreadystatechange = function(){
+
+  		// If the status code is okay (200) then start print the result, otherwise do nothing (keep waiting)
+  		if(this.readyState == 4 && this.status == 200) {
+
+        var table="<table><tr><th>Customer ID</th><th>First Name</th><th>Last name</th><th>SSN</th><th>Adress</th><th>City</th><th>Email</th><th>Phone</th></tr>";
+
+  			// The response text was sent as JSON from the server and this converts the JSON back to an array of arrays
+  			infoList=JSON.parse(xhr.responseText);
+
+        for (i=0;i<infoList.length;i++) {
+          table+='<tr><td>'+infoList[i][0]+'</td>\
+        	<td><input id="a'+i+'" type="text" size="16" value="'+infoList[i][1]+'"></input></td>\
+        	<td><input id="b'+i+'" type="text" size="20" value="'+infoList[i][2]+'"></input></td>\
+        	<td><input id="c'+i+'" type="text" size="14" value="'+infoList[i][3]+'"></input></td>\
+        	<td><input id="d'+i+'" type="text" size="20" value="'+infoList[i][4]+'"></input></td>\
+        	<td><input id="e'+i+'" type="text" size="15" value="'+infoList[i][5]+'"></input></td>\
+        	<td><input id="f'+i+'" type="text" size="32" value="'+infoList[i][6]+'"></input></td>\
+        	<td><input id="g'+i+'" type="text" size="12" value="'+infoList[i][7]+'"></input></td>\
+        	<td><button onclick="updateInfo('+i+','+infoList[i][0]+')">Update</button></td>';
+        }
+        table+="</table></br></br>";
+        infoTable.innerHTML=table;
+      }
+    }
+    xhr.send("");
+  }
+
+  function showPassword() {
+    showMessage('<label>Old Password</label><input id="oldP" class="form-control" placeholder="Enter the Old Password" type="password"><br><label>New Password</label><input id="newP" class="form-control" placeholder="Enter the New Password" type="password"><br><button onclick="password(oldP.value)">Submit</button>');
+  }
+
+  function password(oldP){
+
+  	// Create an instance of the XMLHttpRequset class. See http://www.w3schools.com/xml/xml_http.asp for info
+  	var xhr = new XMLHttpRequest();
+
+  	var passwdData={};
+  	passwdData.oldpasswd=oldP;
+
+  	// Specify POST request and the server's url
+  	xhr.open("POST", '/password', true);
+
+  	// Specify what will happen when a response from the server arrives
+  	xhr.onreadystatechange = function(){
+
+  		// If the status code is okay (200) then start print the result, otherwise do nothing (keep waiting)
+  		if(this.readyState == 4 && this.status == 200) {
+
+  			// The response text was sent as JSON from the server and this converts the JSON back to an array of arrays
+  			if (xhr.responseText=="ok"){
+          changePassword();
+  			}
+        if (xhr.responseText=="error"){
+          	showMessage("Wrong password, try again.<br><br><button onclick='hideMessage()'>OK</button>");
+        }
+  		}
+  	}
+  	// Execute the request and send the order as argument
+  	xhr.send(JSON.stringify(passwdData));
+  }
+
+
+  function changePassword() {
+
+    var newP=document.getElementById("newP").value;
+
+    var newpData={};
+    newpData.newpasswd=newP;
+
+// Create an instance of the XMLHttpRequset class. See http://www.w3schools.com/xml/xml_http.asp for info
+    var xhr = new XMLHttpRequest();
+
+    	// Specify POST request and the server's url
+  	 xhr.open("POST", '/changepassword', true);
+
+     	// Specify what will happen when a response from the server arrives
+     xhr.onreadystatechange = function(){
+
+      // If the status code is okay (200) then start print the result, otherwise do nothing (keep waiting)
+       if(this.readyState == 4 && this.status == 200) {
+
+         if (xhr.responseText=="ok"){
+           showMessage("Your password was successfully changed.<br><br><button onclick='hideMessage()'>OK</button>")
+         }
+         if (xhr.responseText=="error"){
+           showMessage("Could not reach the server, please try again later.<br><br><button onclick='hideMessage()'>OK</button>")
+         }
+       }
+     }
+     xhr.send(JSON.stringify(newpData));
+  }
+
+
+  function time(s) {
+      return new Date(s*1000).toISOString();
+  }
+
+  function getHistory() {
+
+  	// Create an instance of the XMLHttpRequset class. See http://www.w3schools.com/xml/xml_http.asp for info
+  	var xhr = new XMLHttpRequest();
+
+  	// Specify POST request and the server's url
+  	xhr.open("GET", '/history', true);
+
+  	// Specify what will happen when a response from the server arrives
+  	xhr.onreadystatechange = function(){
+
+  		// If the status code is okay (200) then start print the result, otherwise do nothing (keep waiting)
+  		if(this.readyState == 4 && this.status == 200) {
+
+  	    var table="";
+  			// The response text was sent as JSON from the server and this converts the JSON back to an array of arrays
+  			historyList=JSON.parse(xhr.responseText);
+
+    		for (i=0;i<historyList.length;i++) {
+          table+="<table>";
+          table+="<tr><th>Order ID</th><th>Order Created</th><th>Customer ID</th><th>Customer Name</th></tr>";
+          table+="<tr><td>"+historyList[i][1]+"</td><td>"+time(historyList[i][2])+"</td><td>"+historyList[i][0]+"</td><td>"+historyList[i][3]+"</td></tr>";
+          table+="<tr><th>Product_id</th><th>Product Name</th><th>Manufacurer</th><th>Product Cost</th></tr>";
+          for (j=0;j<historyList[i][4].length;j++) {
+            table+="<tr><td>"+historyList[i][4][j][0]+"</td><td>"+historyList[i][4][j][1]+"</td><td>"+historyList[i][4][j][2]+"</td><td>"+historyList[i][4][j][3]+"</td></tr>";
+        }
+    		table+="</table><br><br>";
+    	  orderHistory.innerHTML=table;
+  			}
+  		}
+  	}
+  	xhr.send("");
+  }
+
+  getInfo()
+
+  getHistory()
+
+
+  </script>
+
+</html>

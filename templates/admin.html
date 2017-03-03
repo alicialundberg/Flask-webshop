@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+
+<head>
+
+	<title>Webshop Admin</title>
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+
+<style>
+
+#wrapper{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:50px;
+	bottom:0px;
+	display:flex;
+	justify-content:center;
+	overflow-y:auto;
+}
+
+#navbar{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:0px;
+	height:50px;
+	font-size:32px;
+	display:flex;
+	align-items:center;
+	color:#ffffff;
+	background-color:#a0a0a0;
+}
+
+.navDiv{
+	display:flex;
+	align-items:center;
+	height:100%;
+	font-size:24px;
+	padding:0px 30px 0px 30px;
+	cursor:pointer;
+}
+
+.navDiv:hover{
+	background-color:#a00000;
+}
+
+#messageDimmer{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:0px;
+	bottom:0px;
+	background-color:rgba(0, 0, 0, 0.7);
+	display:none;
+	justify-content:center;
+	align-items:center;
+}
+
+#messageBox{
+	border:2px solid;
+	padding:20px;
+	background-color:#a0a0a0;
+	font-size:20px;
+	font-weight:bold;
+}
+
+#orders, #inventory, #customers{
+	position:relative;
+	display:none;
+}
+
+th{
+	text-align:left;
+}
+
+td{
+	text-align:right;
+}
+
+input[type=number]{
+	text-align:right;
+} 
+
+#orders th, #orders td {
+	width:200px;
+	border:1px solid grey;
+	border-collapse:collapse;
+	padding:0px 5px 0px 5px;
+}
+
+a:link    {color:#ffffff;text-decoration:none;}  /* unvisited link */
+a:visited {color:#ffffff;text-decoration:none;}  /* visited link */
+a:hover   {color:#ffffff;text-decoration:none;}  /* mouse over link */
+a:active  {color:#ffffff;text-decoration:none;}  /* selected link */ 
+
+</style>
+
+<body>
+	<div id="navbar">&nbsp;&nbsp;&nbsp;&nbsp;Needful Things Admin&nbsp;&nbsp;&nbsp;<div id="nav1" class="navDiv" onclick="selectOrders()" >Orders</div><div id="nav2" class="navDiv" onclick="selectStock()" >Stock</div><div id="nav3" class="navDiv" onclick="selectCustomers()" >Customers</div><div class="navDiv" onclick="window.location.href='/'" >Back to Shop</div></div>
+	<div id="wrapper">
+		<div id="orders"></div>
+		<div id="inventory"></div>
+		<div id="customers"></div>
+		<div id="messageDimmer"><div id="messageBox"></div></div>
+	</div>
+</body>
+
+<script>
+
+var stock=[];
+
+function selectOrders(){
+
+	nav1.style['background-color']='#000000';
+	nav2.style['background-color']='';
+	nav3.style['background-color']='';
+	orders.style.display='block';
+	inventory.style.display='none';
+	customers.style.display='none';
+
+}
+
+function selectStock(){
+
+	nav1.style['background-color']='';
+	nav2.style['background-color']='#000000';
+	nav3.style['background-color']='';
+	orders.style.display='none';
+	inventory.style.display='block';
+	customers.style.display='none';
+
+}
+
+function selectCustomers(){
+
+	nav1.style['background-color']='';
+	nav2.style['background-color']='';
+	nav3.style['background-color']='#000000';
+	orders.style.display='none';
+	inventory.style.display='none';
+	customers.style.display='block';
+
+}
+
+// Shows a pop-up message
+function showMessage(text){
+
+	messageBox.innerHTML=text;
+	messageDimmer.style.display='flex';
+}
+
+// Hides the pop-up message
+function hideMessage(){
+
+	messageDimmer.style.display='none';
+}
+
+function addStock(){
+
+	for (i=0;i<stock.length;i++) {
+		if (Number(newPID.value)==stock[i][0]) {
+			showMessage("PID not unique<br><br><button onclick='hideMessage()'>Got it</button>");
+			return(1);
+		}
+	}
+
+	showMessage("Uploading new item.<br>Please wait.");
+
+	var xhr = new XMLHttpRequest();
+	
+	xhr.open("POST", 'http://nile16.nu:1204/addstock', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				getStock();
+				printStock();
+				hideMessage();
+				}
+			if (xhr.responseText=="error"){
+				showMessage("The server responded with an error.<br><br><button onclick='hideMessage()'>Got it</button>");
+				}
+		}
+		if(this.readyState == 4 && this.status == 404) {
+			showMessage("Could not reach the server.<br><br><button onclick='hideMessage()'>Got it</button>");
+		}
+	}
+	xhr.send(JSON.stringify([newPID.value,newName.value,newDesc.value,newImg.value,newManu.value,newStock.value,newCost.value]));
+}
+
+function updateStock(i){
+
+	showMessage("Updating item.<br>Please wait.");
+
+	var xhr = new XMLHttpRequest();
+	
+	xhr.open("POST", 'http://nile16.nu:1204/updatestock', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				getStock();
+				printStock();
+				hideMessage();
+				}
+			if (xhr.responseText=="error"){
+				showMessage("The server responded with an error.<br><br><button onclick='hideMessage()'>Got it</button>");
+				}
+
+		}
+		if(this.readyState == 4 && this.status == 404) {
+			showMessage("Could not reach the server.<br><br><button onclick='hideMessage()'>Got it</button>");
+		}
+	}
+	xhr.send(JSON.stringify([stock[i][0],document.getElementById('a'+i).value,document.getElementById('b'+i).value,document.getElementById('c'+i).value,document.getElementById('d'+i).value,document.getElementById('e'+i).value,document.getElementById('f'+i).value]));
+}
+
+function removeStock(i){
+
+	if (stock[i][5]>0){
+		showMessage("Item still in stock<br><br><button onclick='hideMessage()'>Got it</button>");
+		return(1);
+	}
+	if (stock[i][5]<0){
+		showMessage("Item on back order<br><br><button onclick='hideMessage()'>Got it</button>");
+		return(1);
+	}
+
+	showMessage("Removing stock.<br>Please wait.");
+
+	var xhr = new XMLHttpRequest();
+	
+	xhr.open("POST", 'http://nile16.nu:1204/removestock', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				getStock();
+				printStock();
+				hideMessage();
+				}
+			if (xhr.responseText=="error"){
+				showMessage("The server responded with an error.<br><br><button onclick='hideMessage()'>Got it</button>");
+				}
+
+		}
+		if(this.readyState == 4 && this.status == 404) {
+			showMessage("Could not reach the server.<br><br><button onclick='hideMessage()'>Got it</button>");
+		}
+	}
+	xhr.send(JSON.stringify(stock[i][0]));
+}
+
+function getStock(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("POST", 'http://nile16.nu:1204/search', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			stock=JSON.parse(xhr.responseText);
+			printStock();
+		}
+	}
+	xhr.send("");
+}
+
+// Displays the list of stock on the web page
+function printStock(){
+
+	var table="<table style='width=90%'><tr><th>PID</th><th>Name</th><th>Description</th><th>imgname</th><th>Manufacture</th><th>In Stock</th><th>Adjust</th><th>Cost</th><th>Actions</th></tr>";
+	
+	for (i=0;i<stock.length;i++) {
+
+		table+='<tr><td>'+stock[i][0]+'</td>\
+		<td><input id="a'+i+'" type="text" size="16" value="'+stock[i][1]+'"></input></td>\
+		<td><input id="b'+i+'" type="text" size="64" value="'+stock[i][2]+'"></input></td>\
+		<td><input id="c'+i+'" type="text" size="12" value="'+stock[i][3]+'"></input></td>\
+		<td><input id="d'+i+'" type="text" size="12" value="'+stock[i][4]+'"></input></td>\
+		<td>'+stock[i][5]+'</td>\
+		<td><input id="e'+i+'" type="number" style="width:40px" value="0"></input></td>\
+		<td><input id="f'+i+'" type="text" size="10" value="'+stock[i][6]+'"></input></td>\
+		<td><button onclick="updateStock('+i+')">Update</button></td>\
+		<td><button onclick="removeStock('+i+')">X</button></td></tr>';
+	}
+	table+='<tr><td><input id="newPID" type="text" style="width:30px"></input></td>\
+	<td><input id="newName" type="text" size="16"></input></td>\
+	<td><input id="newDesc" type="text" size="64"></input></td>\
+	<td><input id="newImg" type="text" size="12"></input></td>\
+	<td><input id="newManu" type="text" size="12"></input></td>\
+	<td><input id="newStock" type="text" style="width:50px"></input></td>\
+	<td></td>\
+	<td><input id="newCost" type="text" style="width:70px"></input></td>\
+	<td colspan="2"><button onclick="addStock()" style="width:100%">Add New</button></td></tr>';
+	table+='</table>'
+	inventory.innerHTML=table;
+}
+
+function getCustomers(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", 'http://nile16.nu:1204/getcustomers', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			printCustomers(JSON.parse(xhr.responseText));
+		}
+	}
+	xhr.send("");
+}
+
+// Sends a request to the Python app to update the data on a specific user.
+function updateCustomer(i,customer_id){
+
+	showMessage("Updating Customer.<br>Please wait.");
+
+	var xhr = new XMLHttpRequest();
+	
+	xhr.open("POST", 'http://nile16.nu:1204/updatecustomer', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				getCustomers();
+				hideMessage();
+				}
+			if (xhr.responseText=="error"){
+				showMessage("The server responded with an error.<br><br><button onclick='hideMessage()'>Got it</button>");
+				}
+
+		}
+		if(this.readyState == 4 && this.status == 404) {
+			showMessage("Could not reach the server.<br><br><button onclick='hideMessage()'>Got it</button>");
+		}
+	}
+	if (document.getElementById('ch'+i).checked) 
+		admin="1"; 
+	else 
+		admin="0";
+	
+	xhr.send(JSON.stringify([customer_id,document.getElementById('ca'+i).value,document.getElementById('cb'+i).value,document.getElementById('cc'+i).value,document.getElementById('cd'+i).value,document.getElementById('ce'+i).value,document.getElementById('cf'+i).value,document.getElementById('cg'+i).value,admin]));
+}
+
+// Displays a list of customers on the web page
+function printCustomers(customerList){
+
+	var table="<table style='width=90%'><tr><th>CID</th><th>First Name</th><th>Last Name</th><th>SSN</th><th>Address</th><th>City</th><th>Email</th><th>Phone</th><th>Admin</th></tr>";
+	
+	for (i=0;i<customerList.length;i++) {
+		if (customerList[i][8]=="1") checked="checked"; else checked="";
+		table+='<tr><td>'+customerList[i][0]+'</td>\
+		<td><input id="ca'+i+'" type="text" size="12" value="'+customerList[i][1]+'"></input></td>\
+		<td><input id="cb'+i+'" type="text" size="16" value="'+customerList[i][2]+'"></input></td>\
+		<td><input id="cc'+i+'" type="text" size="12" value="'+customerList[i][3]+'"></input></td>\
+		<td><input id="cd'+i+'" type="text" size="20" value="'+customerList[i][4]+'"></input></td>\
+		<td><input id="ce'+i+'" type="text" size="12" value="'+customerList[i][5]+'"></input></td>\
+		<td><input id="cf'+i+'" type="text" size="32" value="'+customerList[i][6]+'"></input></td>\
+		<td><input id="cg'+i+'" type="text" size="10" value="'+customerList[i][7]+'"></input></td>\
+		<td><input id="ch'+i+'" type="checkbox" '+checked+'></input></td>\
+		<td><button onclick="updateCustomer('+i+','+customerList[i][0]+')">Update</button></td>';
+	}
+	table+='</table>'
+	customers.innerHTML=table;
+}
+
+function time(s) {
+    return new Date(s*1000).toISOString();
+}
+
+function getOrders(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", 'http://nile16.nu:1204/listorders', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			printOrders(JSON.parse(xhr.responseText));
+		}
+	}
+	xhr.send();
+}
+
+// Displays a list of orders on the web page
+function printOrders(orderList){
+
+	var table="";
+
+	for (i=0;i<orderList.length;i++) {
+
+		table+="<table>";
+		table+="<tr><th>"+orderList[i][1]+"</th><th>"+time(orderList[i][2])+"</th><th>"+orderList[i][3]+" "+orderList[i][4]+"</th><th>"+orderList[i][5]+"</th></tr>";
+		table+="<tr><th>"+orderList[i][6]+"</th><th>"+orderList[i][7]+"</th><th>"+orderList[i][8]+"</th><th>"+orderList[i][9]+"</th></tr>";
+		for (j=0;j<orderList[i][10].length;j++) {
+
+			table+="<tr><td>"+orderList[i][10][j][0]+"</td><td>"+orderList[i][10][j][1]+"</td><td>"+orderList[i][10][j][2]+"</td><td>"+orderList[i][10][j][3]+"</td></tr>";
+		}
+
+		table+="</table><br><br>";
+
+	orders.innerHTML=table;
+	}
+}
+
+selectOrders();
+
+getOrders();
+
+getStock();
+
+getCustomers();
+
+</script>
+
+</html>

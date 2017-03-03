@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<head>
+	<title>Needful Things</title>
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<style>
+
+#navbar{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:0px;
+	height:50px;
+	color:#ffffff;
+	background-color:#a0a0a0;
+}
+
+.navDiv{
+	position:relative;
+	height:100%;
+	padding:0px 30px 0px 30px;
+	font-size:32px;
+	line-height:50px;
+	display:flex;
+	align-items:center;
+	float:left;
+	overflow:hidden;
+}
+
+.navDivClick{
+	cursor:pointer;
+	float:right;
+	font-size:24px;
+	display:none;
+}
+
+.navDivClick:hover{
+	background-color:#a00000;
+}
+
+#wrapper{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:50px;
+	bottom:0px;
+}
+
+#messageDimmer{
+	position:absolute;
+	left:0px;
+	right:0px;
+	top:0px;
+	bottom:0px;
+	background-color:rgba(0, 0, 0, 0.7);
+	display:none;
+	justify-content:center;
+	align-items:center;
+}
+
+#messageBox{
+	border:2px solid;
+	padding:20px;
+	background-color:#a0a0a0;
+	font-size:20px;
+	font-weight:bold;
+}
+
+#leftPanel{
+	position:absolute;
+	top:0px;
+	bottom:0px;
+	left:0px;
+	right:400px;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	flex-wrap:wrap;
+	overflow-y:auto;
+}
+
+.item{
+	position:relative;
+	width:200px;
+	height:245px;
+	margin:10px;
+}
+
+.headerDiv{
+	width:200px;
+	height:20px;
+	text-align:center;
+}
+
+.mainDiv{
+	width:200px;
+	height:200px;
+	border-radius:5px;
+}
+
+.textDiv{
+	width:180px;
+	height:180px;
+	padding:10px;
+	text-align:center;
+	border-radius:5px;
+	background-color:#000000;
+	color:#ffffff;
+}
+
+.mainDiv img{
+	position:absolute;
+	width:200px;
+	height:200px;
+	transition-duration:1s;
+	border-radius:5px;
+}
+
+.mainDiv img:hover {
+	opacity:0;
+}
+
+.footerDiv{
+	width:200px;
+	height:20px;
+	text-align:center;
+}
+
+#rightPanel{
+	position:absolute;
+	top:30px;
+	bottom:30px;
+	width:340px;
+	right:30px;
+	overflow-y:auto;
+}
+
+#search{
+	position:relative;
+	text-align:right;
+}
+
+#basket{
+	position:relative;
+}
+
+#orderForm{
+	position:relative;
+	text-align:right;
+}
+
+#nameDiv{
+	display:inline;
+	width:200px;
+}
+
+</style>
+
+<body>
+	<div id="navbar">
+		<div class="navDiv">Needful Things</div>
+		<div class="navDiv">
+			<input id="searchBox" class="form-control" type="text" placeholder="eg Volvo">
+			<button onclick="runSearch(searchBox.value)">Search</button>
+		</div>
+		<div id="adminbutton"  class="navDiv navDivClick" onclick="window.location.href='/admin'">Admin Tools</div>
+		<div id="signupbutton" class="navDiv navDivClick" onclick="window.location.href='/register'">Sign Up</div>
+		<div id="loginbutton"  class="navDiv navDivClick" onclick="showLogin()">Login</div>
+		<div id="logoutbutton" class="navDiv navDivClick" onclick="logout()">Logout</div>
+		<div id="nameDiv"      class="navDiv navDivClick" onclick="window.location.href='/customer'"></div>
+	</div>
+	<div id="wrapper">
+			<div id="leftPanel"></div>
+			<div id="rightPanel">
+				<div id="basket"></div>
+				<button onclick="placeOrder()">Order</button>
+			</div>
+			<div id="messageDimmer"><div id="messageBox"></div></div>
+	</div>
+</body>
+
+<script>
+
+var cart=[];
+var result=[];
+var cartTotal=0;
+
+function showLogin(){
+	showMessage('<input id="user" type="text" placeholder="User name"><br><input id="passwd" type="password" placeholder="Password"><br>\
+				<button onclick="login(user.value,passwd.value)">Login</button>');
+}
+
+// Sends a request to the Python app to log in the current user.
+function login(user,passwd){
+
+	showMessage("Please wait.");
+
+	var xhr = new XMLHttpRequest();
+
+	var loginData={};
+	loginData.user=user;
+	loginData.passwd=passwd;
+
+	xhr.open("POST", '/login', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				hideMessage();
+				getUserStatus();
+				getCart();
+				}
+			if (xhr.responseText=="error"){
+				showMessage("Wrong user name or password.<br><br><button onclick='hideMessage()'>Got it</button>");
+				}
+
+		}
+	}
+	xhr.send(JSON.stringify(loginData));
+}
+
+// Sends a request to the Python app to log out the current user.
+function logout(){
+
+	showMessage("Logging out.");
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", "/logoff", true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			if (xhr.responseText=="ok"){
+				hideMessage();
+				cart=[];
+				printCart();
+				getUserStatus();
+			}
+		}
+	}
+	xhr.send();
+}
+
+// Sends a request to the Python app to check if the user is logged in. If the user is logged in the user's 
+// name is displayed in the navbar together with a button for log out. If the user has admin rights the button 
+// for admin tools is shown. If the user is not logged in the buttons for login and sign up are shown.
+function getUserStatus(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", '/getuserstatus', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			c=JSON.parse(xhr.responseText);
+			if (c.name) {
+				nameDiv.innerHTML=c.name;
+				nameDiv.style.display='block';
+				logoutbutton.style.display='block';
+				loginbutton.style.display='none';
+				signupbutton.style.display='none';
+				}
+			else {
+				nameDiv.innerHTML="";
+				nameDiv.style.display='none';
+				logoutbutton.style.display='none';
+				loginbutton.style.display='block';
+				signupbutton.style.display='block';
+			}
+			if (c.admin==1)
+				adminbutton.style.display='block';
+			else
+				adminbutton.style.display='none';
+		}
+	}
+	xhr.send();
+}
+
+function addToCart(item){
+	cart.push(result[item]);
+	printCart();
+	saveCart();
+}
+
+function removeFromCart(item){
+	cart.splice(item,1);
+	printCart();
+	saveCart();
+}
+
+// Sends a request to the Python app to save the shopping cart content. 
+function saveCart(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("POST", '/savecart', true);
+			
+	xhr.send(JSON.stringify(cart));
+
+}
+
+// Sends a request to the Python app to retrieve the shopping cart content. 
+function getCart(){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", '/getcart', true);
+			
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+			cart=cart.concat(JSON.parse(xhr.responseText));
+			saveCart();
+			printCart();
+		}
+	}
+	xhr.send();
+
+}
+
+// Prints the content of the shopping cart in the right panel of the webpage.
+function printCart(){
+
+	cartTotal=0;
+	html="<table style='width:100%'><tr><td colspan='2'><b>Your Cart</b></td></tr>";
+
+	html+='<tr><td colspan=2><hr><tr>'
+
+	for (i=0;i<cart.length;i++) {
+		html+='<tr><td>'+cart[i][1]+"</td><td style='text-align:right'>"+cart[i][6]+" <button onclick='removeFromCart("+i+")'>X</button></td></tr>";
+		cartTotal+=parseFloat(cart[i][6]);}
+
+	if (cart.length==0)
+		html+="<tr><td colspan=2>Empty<tr>";
+
+	html+="<tr><td colspan=2><hr><tr>";
+	html+="<tr><td>Total:</td><td style='text-align:right'>"+cartTotal.toFixed(2)+"</td></tr></table>";
+
+	basket.innerHTML=html;
+
+}
+
+// Shows a pop-up message
+function showMessage(text){
+	messageBox.innerHTML=text;
+	messageDimmer.style.display='flex';
+}
+
+// Hides the pop-up message
+function hideMessage(text){
+	messageDimmer.style.display='none';
+}
+
+function placeOrder(){
+
+	if (cart.length!=0) {
+
+		showMessage("Placing your order.<br>Please wait.");
+
+		var xhr = new XMLHttpRequest();
+
+		xhr.open("POST", '/order', true);
+
+		xhr.onreadystatechange = function(){
+
+			if(this.readyState == 4 && this.status == 200) {
+
+				if (xhr.responseText=="ok"){
+					showMessage("Your order has been received.<br><br><button onclick='hideMessage()'>Got it</button>");
+					cart=[];
+					printCart();
+					saveCart();
+					}
+				if (xhr.responseText=="login"){
+					showMessage("You must login.<br><br><button onclick='hideMessage()'>Got it</button>");
+					}
+
+			}
+		}
+		xhr.send(JSON.stringify(cart));
+	}
+	else
+		showMessage("Your cart is empty.<br><br><button onclick='hideMessage()'>Got it</button>");
+}
+
+// Sends a request to the Python app to query the Product table. When the response arrives with product data it is written in the left 
+// panel of the web page. If the query string is empty all products will match. If "top10" is sent the top 10 selling products is returned.
+function runSearch(searchString){
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("POST", '/search', true);
+
+	xhr.onreadystatechange = function(){
+
+		if(this.readyState == 4 && this.status == 200) {
+
+			result=JSON.parse(xhr.responseText);
+
+			leftPanel.innerHTML="";
+
+			for (i=0;i<result.length;i++) {
+
+				leftPanel.innerHTML+='<div class="item"><div class="headerDiv"><b>'+result[i][1]+'</b></div><div class="mainDiv"><img src="static/pics/'+result[i][3]+'"><div class="textDiv">'+result[i][2]+'<br>Brand: <i>'+result[i][4]+'</i><br>Only '+result[i][6]+' kr<br>'+result[i][5]+' in stock<br></div></div><div class="footerDiv"><button onclick="addToCart('+i+')">Buy Now</button></div></div>';
+			}
+			if (result=="") leftPanel.innerHTML="The search for '"+searchString+"' returned nothing.";
+		}
+	}
+	xhr.send(searchString);
+}
+
+
+runSearch("");
+
+getUserStatus();
+
+getCart();
+
+</script>
+
+</html>
